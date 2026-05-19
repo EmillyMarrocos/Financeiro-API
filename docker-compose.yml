@@ -6,31 +6,30 @@ services:
     container_name: financeiro_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root 
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: financeiro_db
       MYSQL_USER: financeiro_user
       MYSQL_PASSWORD: financeiro_pass
     ports:
-      -'3306:3306'
+      - '3306:3306'
     volumes:
       - mysql_data:/var/lib/mysql
 
-api:
-  build: .
-  container_name: financeiro_api
-  restart: always
-  ports:
-    - '3000:3000'
-  environment:
-    BD_HOST: db
-    BD_PORT: 3306
-    BD_USER: financeiro_user
-    BD_PASSWORD: financeiro_pass
-    DB_NAME: financeiro_db
-
-    JWT_SECRET: supersecretjwt
-  depends_on:
-    - db
+  api:
+    build: .
+    container_name: financeiro_api
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: financeiro_user
+      DB_PASSWORD: financeiro_pass
+      DB_NAME: financeiro_db
+      JWT_SECRET: supersecretjwt
+    depends_on:
+      - db
 
 volumes:
   mysql_data:
