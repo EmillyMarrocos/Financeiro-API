@@ -22,8 +22,8 @@ export class TransactionsService {
   }
 
   async findAll(userId: string, filters: FilterTransactionDto) {
-    const page = parseInt(filters.page || '1');
-    const limit = parseInt(filters.limit || '10');
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
     const skip = (page - 1) * limit;
 
     const query = this.transactionsRepository
@@ -57,34 +57,35 @@ export class TransactionsService {
   }
 
   async summary(userId: string) {
-    const transactions = await this.transactionsRepository.find({
-      where: { userId },
-    });
+    const { income } = await this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .select('SUM(transaction.amount)', 'income')
+      .where('transaction.user_id = :userId', { userId })
+      .andWhere('transaction.type = :type', { type: TransactionType.INCOME })
+      .getRawOne();
 
-    const income = transactions
-      .filter((t) => t.type === TransactionType.INCOME)
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const { expense } = await this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .select('SUM(transaction.amount)', 'expense')
+      .where('transaction.user_id = :userId', { userId })
+      .andWhere('transaction.type = :type', { type: TransactionType.EXPENSE })
+      .getRawOne();
 
-    const expense = transactions
-      .filter((t) => t.type === TransactionType.EXPENSE)
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+    const totalIncome = Number(income) || 0;
+    const totalExpense = Number(expense) || 0;
 
     return {
-      income,
-      expense,
-      balance: income - expense,
+      income: totalIncome,
+      expense: totalExpense,
+      balance: totalIncome - totalExpense,
     };
   }
 
   async update(userId: string, id: string, dto: UpdateTransactionDto): Promise<Transaction> {
-    const transaction = await this.transactionsRepository.findOne({ where: { id } });
+    const transaction = await this.transactionsRepository.findOne({ where: { id, userId } });
 
     if (!transaction) {
-      throw new NotFoundException('Transação não encontrada');
-    }
-
-    if (transaction.userId !== userId) {
-      throw new ForbiddenException('Você não tem permissão para editar esta transação');
+      throw new NotFoundException('Transação não encontrada ou você não tem permissão');
     }
 
     Object.assign(transaction, dto);
@@ -92,14 +93,10 @@ export class TransactionsService {
   }
 
   async remove(userId: string, id: string): Promise<void> {
-    const transaction = await this.transactionsRepository.findOne({ where: { id } });
+    const transaction = await this.transactionsRepository.findOne({ where: { id, userId } });
 
     if (!transaction) {
-      throw new NotFoundException('Transação não encontrada');
-    }
-
-    if (transaction.userId !== userId) {
-      throw new ForbiddenException('Você não tem permissão para deletar esta transação');
+      throw new NotFoundException('Transação não encontrada ou você não tem permissão');
     }
 
     await this.transactionsRepository.remove(transaction);

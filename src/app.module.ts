@@ -22,6 +22,8 @@ import { TransactionsModule } from './transactions/transactions.module';
         database: config.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+        retryAttempts: 10,
+        retryDelay: 3000,
       }),
     }),
     UsersModule,
