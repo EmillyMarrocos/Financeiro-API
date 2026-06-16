@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro API - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            margin: 50px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .login-container h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .user-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header button {
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        .form-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .table-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f5f5;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .income {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .expense {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-small:hover {
+            opacity: 0.8;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+            display: block;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border: 1px solid #fca5a5;
+            display: block;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login -->
+        <div id="loginContainer" class="login-container">
+            <h1>💰 Financeiro API</h1>
+            <div id="loginMessage" class="message"></div>
+            
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="loginPassword" placeholder="sua senha">
+            </div>
+            
+            <button onclick="login()">Entrar</button>
+            
+            <div style="text-align: center; color: #999; font-size: 14px;">
+                Ou registre-se primeiro:
+            </div>
+            
+            <button onclick="toggleRegister()" style="background: #10b981;">Criar Conta</button>
+        </div>
+
+        <!-- Register -->
+        <div id="registerContainer" class="login-container" style="display: none;">
+            <h1>📝 Criar Conta</h1>
+            <div id="registerMessage" class="message"></div>
+            
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" id="registerName" placeholder="Seu nome">
+            </div>
+            
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="registerEmail" placeholder="seu@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="registerPassword" placeholder="sua senha">
+            </div>
+            
+            <button onclick="register()">Registrar</button>
+            <button onclick="toggleRegister()" style="background: #6b7280;">Voltar ao Login</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <div class="header">
+                <div>
+                    <h1>💰 Dashboard Financeiro</h1>
+                    <div class="user-info">Usuário: <span id="userName"></span></div>
+                </div>
+                <button onclick="logout()">Sair</button>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <!-- Form Nova Transação -->
+            <div class="form-section">
+                <h2>➕ Nova Transação</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="description" placeholder="Ex: Café">
+                    </div>
+                    <div class="form-group">
+                        <label>Valor</label>
+                        <input type="number" id="amount" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="type" style="padding: 12px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="income">Receita</option>
+                            <option value="expense">Despesa</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="createTransaction()" style="width: 100%;">Adicionar Transação</button>
+            </div>
+
+            <!-- Resumo -->
+            <div id="summary" class="summary" style="display: none;"></div>
+
+            <!-- Tabela de Transações -->
+            <div class="table-section">
+                <h2>📊 Transações</h2>
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #999;">Carregando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token');
+        let currentUser = localStorage.getItem('user');
+
+        // Mostrar dashboard se estiver logado
+        if (token && currentUser) {
+            try {
+                showDashboard();
+            } catch (e) {
+                console.error('Erro ao carregar dashboard:', e);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+            }
+        }
+
+        function toggleRegister() {
+            document.getElementById('loginContainer').style.display = 
+                document.getElementById('loginContainer').style.display === 'none' ? 'flex' : 'none';
+            document.getElementById('registerContainer').style.display = 
+                document.getElementById('registerContainer').style.display === 'none' ? 'flex' : 'none';
+        }
+
+        async function register() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            if (!name || !email || !password) {
+                showMessage('registerMessage', 'Preencha todos os campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('registerMessage', 'Conta criada com sucesso! Faça login.', 'success');
+                    setTimeout(() => toggleRegister(), 1500);
+                } else {
+                    showMessage('registerMessage', data.message || 'Erro ao registrar', 'error');
+                }
+            } catch (error) {
+                showMessage('registerMessage', 'Erro na conexão', 'error');
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showMessage('loginMessage', 'Preencha todos os campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    token = data.access_token;
+                    currentUser = JSON.stringify(data.user);
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('user', currentUser);
+                    showDashboard();
+                } else {
+                    showMessage('loginMessage', data.message || 'Erro ao fazer login', 'error');
+                }
+            } catch (error) {
+                showMessage('loginMessage', 'Erro na conexão', 'error');
+            }
+        }
+
+        function logout() {
+            token = null;
+            currentUser = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('registerContainer').style.display = 'none';
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('registerContainer').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+            
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    document.getElementById('userName').textContent = user.name;
+                } catch (e) {
+                    document.getElementById('userName').textContent = 'Usuário';
+                }
+            }
+            
+            loadTransactions();
+        }
+
+        async function createTransaction() {
+            const description = document.getElementById('description').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            const type = document.getElementById('type').value;
+
+            if (!description || !amount || amount <= 0) {
+                showMessage('message', 'Preencha todos os campos corretamente', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/transactions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ description, amount, type })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('message', 'Transação criada com sucesso!', 'success');
+                    document.getElementById('description').value = '';
+                    document.getElementById('amount').value = '';
+                    document.getElementById('type').value = 'income';
+                    loadTransactions();
+                } else {
+                    showMessage('message', data.message || 'Erro ao criar transação', 'error');
+                }
+            } catch (error) {
+                showMessage('message', 'Erro na conexão', 'error');
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await fetch(`${API_URL}/transactions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    renderTransactions(data);
+                    loadSummary();
+                } else {
+                    showMessage('message', 'Erro ao carregar transações', 'error');
+                }
+            } catch (error) {
+                showMessage('message', 'Erro na conexão', 'error');
+            }
+        }
+
+        async function loadSummary() {
+            try {
+                const response = await fetch(`${API_URL}/transactions/summary`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    renderSummary(data);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar resumo:', error);
+            }
+        }
+
+        function renderSummary(data) {
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.innerHTML = `
+                <div class="summary-card">
+                    <h3>Receitas</h3>
+                    <div class="value income">R$ ${(data.totalIncome || 0).toFixed(2)}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Despesas</h3>
+                    <div class="value expense">R$ ${(data.totalExpense || 0).toFixed(2)}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Saldo</h3>
+                    <div class="value">${((data.totalIncome || 0) - (data.totalExpense || 0)) >= 0 ? '+' : ''}R$ ${((data.totalIncome || 0) - (data.totalExpense || 0)).toFixed(2)}</div>
+                </div>
+            `;
+            summaryDiv.style.display = 'grid';
+        }
+
+        function renderTransactions(transactions) {
+            const tbody = document.querySelector('#transactionsTable tbody');
+            
+            if (!transactions || transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">Nenhuma transação encontrada</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(t => `
+                <tr>
+                    <td>${new Date(t.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td>${t.description}</td>
+                    <td>${t.type === 'income' ? '💰 Receita' : '💸 Despesa'}</td>
+                    <td class="${t.type === 'income' ? 'income' : 'expense'}">
+                        ${t.type === 'income' ? '+' : '-'} R$ ${t.amount.toFixed(2)}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-small btn-delete" onclick="deleteTransaction(${t.id})">Deletar</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function deleteTransaction(id) {
+            if (!confirm('Tem certeza que deseja deletar esta transação?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/transactions/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    showMessage('message', 'Transação deletada com sucesso!', 'success');
+                    loadTransactions();
+                } else {
+                    showMessage('message', 'Erro ao deletar transação', 'error');
+                }
+            } catch (error) {
+                showMessage('message', 'Erro na conexão', 'error');
+            }
+        }
+
+        function showMessage(elementId, text, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = `message ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
